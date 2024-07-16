@@ -1,0 +1,162 @@
+
+## use case diagram
+
+```mermaid
+
+%%{init: {"theme": "dark", "flowchart": {"curve": "linear", "useMaxWidth": false}}}%%
+flowchart LR
+
+subgraph  
+
+	user[user]
+
+end
+
+subgraph whippx
+
+	uc1((transcribe local\naudio file))
+	uc2((record audio and transcribe\nin real-time))
+	uc3((save transcriptions\nlocally))
+	uc4((save recorded audio\nlocally))
+
+end
+
+subgraph  
+
+	transcriptor[transcriptor]
+	local_storage[local_storage]
+
+end
+
+user o--o uc1
+user o--o uc2
+
+uc1 -.include.-> uc3
+uc2 -.include.-> uc3
+uc2 -.include.-> uc4
+
+uc1 o--o transcriptor
+uc2 o--o transcriptor
+uc3 o--o local_storage
+uc4 o--o local_storage
+
+```
+
+
+## use cases specifications
+
+### uc01 - transcribe local audio file
+
+| description    | the application should transcribe audio files stored on the device. the user selects an audio file, and the application processes and transcribes it into text. |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| actors         | user, transcriptor                                                                                                                                              |
+| preconditions  | the user has audio files stored on the device.                                                                                                                  |
+| postconditions | the selected audio file is transcribed into text accurately.                                                                                                    |
+| basic flow     | 1. user opens the application. 2. user selects an audio file. 3. application processes the audio file. 4. application displays the transcribed text.            |
+| exceptions     | 1. file format not supported. 2. file cannot be accessed.                                                                                                       |
+
+```mermaid
+%%{init: {"theme": "dark", "flowchart": {"curve": "linear", "useMaxWidth": true}}}%%
+flowchart TD
+    start[start]
+    open_app[open application]
+    select_file[select audio file]
+    process_file[process audio file]
+    display_text[display transcribed text]
+    end_[end]
+    error[error]
+
+    start --> open_app
+    open_app --> select_file
+    select_file --> process_file
+    process_file --> display_text
+    display_text --> end_
+    process_file -->|file format\nnot supported| error
+    process_file -->|file cannot\nbe accessed| error
+    error --> end_
+```
+
+### uc02 - record audio and transcribe in real-time
+
+| description    | the application should record audio through the device's microphone and transcribe it in real-time. the user can start and stop recording as needed.                       |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| actors         | user, transcriptor                                                                                                                                                         |
+| preconditions  | the user has a functioning microphone.                                                                                                                                     |
+| postconditions | the recorded audio is transcribed into text in real-time.                                                                                                                  |
+| basic flow     | 1. user opens the application. 2. user starts recording. 3. application transcribes audio in real-time. 4. user stops recording. 5. application displays transcribed text. |
+| exceptions     | 1. microphone not detected.                                                                                                                                                |
+
+```mermaid
+%%{init: {"theme": "dark", "flowchart": {"curve": "linear", "useMaxWidth": true}}}%%
+flowchart TD
+    start[start]
+    open_app[open application]
+    start_recording[start recording]
+    transcribe_audio[transcribe audio in real-time]
+    stop_recording[stop recording]
+    display_text[display transcribed text]
+    end_[end]
+    error[error]
+
+    start --> open_app
+    open_app --> start_recording
+    start_recording --> transcribe_audio
+    transcribe_audio --> stop_recording
+    stop_recording --> display_text
+    display_text --> end_
+    start_recording -->|microphone not detected| error
+    error --> end_
+```
+
+### uc03 - save transcriptions locally
+
+| description    | the application should allow users to save the transcribed text files if requested.                                   |
+| -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| actors         | user, local storage                                                                                                   |
+| preconditions  | the user has transcribed audio with cu1 or cu2.                                                                       |
+| postconditions | the transcribed text is saved as a txt file in the specified location.                                                |
+| basic flow     | 1. user selects to save transcribed text. 2. user names the file and chooses location. 3. application saves the file. |
+| exceptions     | 1. save location not accessible.                                                                                      |
+
+```mermaid
+%%{init: {"theme": "dark", "flowchart": {"curve": "linear", "useMaxWidth": true}}}%%
+flowchart TD
+
+    select_save[select save transcribed text]
+    name_file[name file and choose location]
+    save_file[save file]
+    end_[end]
+    error[error]
+
+    select_save --> name_file
+    name_file --> save_file
+    save_file --> end_
+    save_file -->|save location\nnot accessible| error
+    error --> end_
+```
+
+### uc04 - save recorded audio locally
+
+| description    | the application should allow users to save recorded audio files if requested.                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------------- |
+| actors         | user, local storage                                                                                                 |
+| preconditions  | the user has recorded audio in cu2.                                                                                 |
+| postconditions | the recorded audio is saved as an .mp3 file in the specified location.                                              |
+| basic flow     | 1. user selects to save recorded audio. 2. user names the file and chooses location. 3. application saves the file. |
+| exceptions     | 1. save location not accessible.                                                                                    |
+
+```mermaid
+%%{init: {"theme": "dark", "flowchart": {"curve": "linear", "useMaxWidth": true}}}%%
+flowchart TD
+    select_save[select save recorded audio]
+    name_file[name file and choose location]
+    save_file[save file]
+    end_[end]
+    error[error]
+
+    select_save --> name_file
+    name_file --> save_file
+    save_file --> end_
+    save_file -->|save location\nnot accessible| error
+    error --> end_
+```

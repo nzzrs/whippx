@@ -14,19 +14,62 @@
   - nombre de la app en la otra esquina
 - paleta de colores en tonos azules y morados
 - fondo negro con un degradado morado y azul
+## use cases diagram
 
-## diagrama de casos de uso
+```mermaid
+
+%%{init: {"theme": "dark", "flowchart": {"curve": "linear", "useMaxWidth": false}}}%%
+
+flowchart LR
+
+subgraph  
+
+	user[user]
+
+end
+
+subgraph whippx
+
+	uc1((transcribe local audio file))
+	uc2((record and transcript in real time))
+	uc3((save transcription))
+	uc4((save recorded audio))
+
+end
+
+subgraph  
+
+	transcriptor[transcriptor]
+	localStorage[localStorage]
+
+end
+
+user o--o uc1
+user o--o uc2
+
+uc2 -.include.-> uc3
+uc2 -.include.-> uc4
+
+uc1 o--o transcriptor
+uc2 o--o transcriptor
+uc3 o--o localStorage
+uc4 o--o localStorage
+
+```
+## use cases flowchart
 
 ```mermaid
 
 %%{init: {"theme": "dark", "flowchart": {"curve": "stepAfter", "useMaxWidth": true}}}%%
 
 graph TD
-    A(( )) --> B[Ventana Inicial]
-    B --> C[Círculo con ícono de micrófono]
-    C --> D[Grabar audio]
+    A(( )) --> mainScreen[main screen]
+    
+    mainScreen --> microphoneButton[click on microphone button]
+    microphonebutton
     D --> E[Transcribir en tiempo real]
     E --> F[Mostrar transcripción]
+    
     B --> G[Ícono Abrir]
     G --> H[Seleccionar archivo de audio]
     H --> I[Transcribir audio almacenado]
