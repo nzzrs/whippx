@@ -18,8 +18,8 @@ dateFormat YYYY-MM-DD
 section sprint 1
 
 	project plan               :a1, 2024-07-14, 2d
-	SSRQSP                     :a3, 2024-07-15, 2d
-	SSANDS                     :a4, after a3,   2d
+	ssrqssp                     :a3, 2024-07-15, 2d
+	sands                     :a4, after a3,   2d
 
 section sprint 2
 

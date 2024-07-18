@@ -64,11 +64,11 @@ uc4 o--o local_storage
 | priority             | high                                                                                                                                                            |
 | stability            | stable                                                                                                                                                          |
 | associated user type | user                                                                                                                                                            |
-| actors         | user, transcriptor                                                                                                                                              |
-| preconditions  | the user has audio files stored on the device.                                                                                                                  |
-| postconditions | the selected audio file is transcribed into text accurately.                                                                                                    |
-| basic flow     | 1. user opens the application. 2. user selects an audio file. 3. application processes the audio file. 4. application displays the transcribed text.            |
-| exceptions     | 1. file format not supported. 2. file cannot be accessed.                                                                                                       |
+| actors               | user, transcriptor                                                                                                                                              |
+| preconditions        | the user has audio files stored on the device.                                                                                                                  |
+| postconditions       | the selected audio file is transcribed into text accurately.                                                                                                    |
+| basic flow           | 1. user opens the application. 2. user selects an audio file. 3. application processes the audio file. 4. application displays the transcribed text.            |
+| exceptions           | 1. file format not supported. 2. file cannot be accessed.                                                                                                       |
 
 
 ```mermaid
@@ -140,17 +140,17 @@ error --> end_
 
 ### rq03 - save transcriptions locally
 
-| description          | the application should allow users to save the transcribed text files if requested.                                  |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| observations         | users should have the option to name the file and choose the save location. the saved files should be in txt format. |
-| priority             | medium                                                                                                               |
-| stability            | stable                                                                                                               |
-| associated user type | user                                                                                                                 |
-| actors         | user, local storage                                                                                                   |
-| preconditions  | the user has transcribed audio with cu1 or cu2.                                                                       |
-| postconditions | the transcribed text is saved as a txt file in the specified location.                                                |
-| basic flow     | 1. user selects to save transcribed text. 2. user names the file and chooses location. 3. application saves the file. |
-| exceptions     | 1. save location not accessible.                                                                                      |
+| description          | the application should allow users to save the transcribed text files if requested.                                   |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| observations         | users should have the option to name the file and choose the save location. the saved files should be in txt format.  |
+| priority             | medium                                                                                                                |
+| stability            | stable                                                                                                                |
+| associated user type | user                                                                                                                  |
+| actors               | user, local storage                                                                                                   |
+| preconditions        | the user has transcribed audio with cu1 or cu2.                                                                       |
+| postconditions       | the transcribed text is saved as a txt file in the specified location.                                                |
+| basic flow           | 1. user selects to save transcribed text. 2. user names the file and chooses location. 3. application saves the file. |
+| exceptions           | 1. save location not accessible.                                                                                      |
 
 
 ```mermaid
@@ -274,6 +274,6 @@ error --> end_
 
 ### general restrictions
 
-- **software compatibility**: the application should run on widely used mobile operating systems, namely Android and IOS.
+- **software compatibility**: the application should run on widely used mobile operating systems, namely android and ios.
 - **file format support**: the application must support popular audio file formats.
 - **performance constraints**: the application should process and transcribe audio files efficiently without significant delays.
