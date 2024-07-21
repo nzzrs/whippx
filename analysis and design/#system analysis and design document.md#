@@ -8,11 +8,12 @@ this document provides a comprehensive analysis and design for whippx.
 the system is designed to provide transcription services for audio files and real-time audio recording. it aims to assist users by converting spoken words into text, facilitating the creation of written records of audio content. the system also allows users to save both transcribed text and recorded audio files locally.
 
 ### system architecture
-the system is built using flutter for cross-platform mobile development, and utilizes whisperx for transcription services. it is designed to run on both android and ios platforms.
+the system is built using flutter for cross-platform mobile development, and utilizes whisperx for transcription services. it is designed to run on both android and ios platforms, providing a consistent user experience across devices.
 
 ## high-level design
 
 ### architecture diagram
+the architecture diagram provides a high-level view of the system's components and their interactions.
 
 ```mermaid
 %%{init: {"theme": "dark", "flowchart": {"curve": "linear", "useMaxWidth": false}}}%%
@@ -36,6 +37,7 @@ storage -->|save/load files| logic
 ```
 
 ### components diagram
+this diagram details the main components of the flutter application and their interactions.
 
 ```mermaid
 %%{init: {"theme": "dark", "flowchart": {"curve": "linear", "useMaxWidth": false}}}%%
@@ -60,6 +62,7 @@ file_manager --> storage
 ```
 
 ### interfaces
+this section describes the interfaces between the main components of the system.
 
 - **user interface (ui)**: provides the front-end components for user interactions.
 - **audio manager**: handles audio recording and playback functionalities.
@@ -70,6 +73,7 @@ file_manager --> storage
 ## detailed design
 
 ### class diagram
+the class diagram represents the classes involved in the system and their relationships.
 
 ```mermaid
 %%{init: {"theme": "dark", "flowchart": {"curve": "linear", "useMaxWidth": false}}}%%
@@ -175,7 +179,7 @@ stateDiagram-v2
 
 ```
 
-### user interface design
+### user interface designJ
 
 - **home screen**: features a large microphone icon in the center, an open icon in one corner, and the app name in the other corner. when recording, the animation shows audio levels in form of waves.
 - **transcription screen**: shows the transcribed text with option to save.
