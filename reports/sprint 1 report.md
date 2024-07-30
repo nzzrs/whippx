@@ -12,4 +12,4 @@
 - all events finished on time, except for the sprint 1 report, which had a one-day delay
 
 ## feedback and retrospective
-the project is progressing well, but some adjustements are needed in time management and the cumpliance plan 
+the project is progressing well, but some adjustments are needed in time management and the compliance plan 
