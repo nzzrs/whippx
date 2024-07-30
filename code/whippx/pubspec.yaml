@@ -1,5 +1,5 @@
 name: whippx
-description: "a new flutter project."
+description: "flutter app that translates audio files"
 publish_to: 'none' # remove this line if you wish to publish to pub.dev
 
 version: 1.0.0+1
@@ -13,6 +13,7 @@ dependencies:
   http: ^0.13.3
   cupertino_icons: ^1.0.6
   path_provider: ^2.0.0
+  file_picker: ^5.2.4 # agrega esta línea
 
 dev_dependencies:
   flutter_test:
