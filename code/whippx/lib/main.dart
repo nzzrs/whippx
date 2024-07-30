@@ -18,7 +18,7 @@ class AppStrings {
   // mensaje que se muestra si ocurre un error durante la transcripción
   static const String errorTranscribing = 'error transcribing audio';
   // texto para la herramienta de transcripción
-  static const String transcribeTooltip = 'transcribe';
+  static const String transcribeTooltip = 'record';
   // texto para la herramienta de selección de archivos
   static const String selectFileTooltip = 'select file';
 }
@@ -155,6 +155,8 @@ class _HomePageState extends State<HomePage> {
               // alineación del texto al centro
               textAlign: TextAlign.center,
             ),
+            // blank space
+            SizedBox(height: 16),
             // muestra un indicador de progreso si el archivo se está procesando
             if (_isProcessing)
               const CircularProgressIndicator(),
