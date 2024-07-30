@@ -5,8 +5,11 @@ import tempfile
 
 app = Flask(__name__)
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model = whisperx.load_model("large-v2", device)
+# device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cpu"  # added
+# model = whisperx.load_model("large-v2", device)
+
+model = whisperx.load_model("base", device)  # added
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -25,7 +28,9 @@ def transcribe():
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
             file.save(tmp.name)
             audio = whisperx.load_audio(tmp.name)
-            result = model.transcribe(audio)
+            with torch.no_grad():  # added
+                result = model.transcribe(audio)
+                torch.cuda.empty_cache()  # added
             return jsonify(result["segments"]), 200
 
 if __name__ == '__main__':

@@ -2,7 +2,7 @@
 
 ---
 
-Flutter app that translates voice files using WhisperX
+Flutter app that translates audio files using WhisperX
 
 ---
 
