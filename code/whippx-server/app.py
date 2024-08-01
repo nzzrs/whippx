@@ -3,18 +3,20 @@ import whisperx
 import torch
 import tempfile
 import time
+import threading
 
 app = Flask(__name__)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model = whisperx.load_model("large-v2", device, compute_type="float32")
+transcriptions = {}
 
 @app.route('/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "ok"}), 200
 
-@app.route('/transcribe', methods=['POST'])
-def transcribe():
+@app.route('/send-to-transcribe', methods=['POST'])
+def send_to_transcribe():
     if 'file' not in request.files:
         return jsonify({"error": "no file part"}), 400
 
@@ -23,19 +25,34 @@ def transcribe():
         return jsonify({"error": "no selected file"}), 400
 
     if file:
-        start_time = time.time()
-        with tempfile.NamedTemporaryFile(delete=False) as tmp:
-            file.save(tmp.name)
-            audio = whisperx.load_audio(tmp.name)
+        file_id = str(time.time())
+        transcriptions[file_id] = {"status": "processing"}
+
+        def transcribe_file(file_content, file_id):
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(file_content)
+                tmp_path = tmp.name
+
+            audio = whisperx.load_audio(tmp_path)
             result = model.transcribe(audio, batch_size=16)
-            print(result["segments"])
-            print("result line executed")
             transcription_text = "\n".join([segment['text'] for segment in result["segments"]])
-            print("transcription_text line executed")
-            end_time = time.time()
-            total_time = end_time - start_time
-            print(f"Total transcription time: {total_time:.2f} seconds")
-            return transcription_text, 200
+            transcriptions[file_id] = {"status": "completed", "transcription": transcription_text}
+
+        file_content = file.read()
+        threading.Thread(target=transcribe_file, args=(file_content, file_id)).start()
+
+        return jsonify({"file_id": file_id}), 200
+
+@app.route('/get-response', methods=['GET'])
+def get_response():
+    file_id = request.args.get('file_id')
+    if not file_id or file_id not in transcriptions:
+        return jsonify({"error": "file not found"}), 404
+
+    if transcriptions[file_id]["status"] == "completed":
+        return transcriptions[file_id]["transcription"], 200
+    else:
+        return jsonify({"status": "processing"}), 404
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
