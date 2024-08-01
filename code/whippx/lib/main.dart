@@ -26,10 +26,14 @@ class AppStrings {
   static const String transcriptionFileSuffix = 'transcription';
   static const String downloadSnackBarMessage = 'transcription downloaded to';
   static const String stopRecordingTooltip = 'stop recording';
-  static const String grantPermissionMessage = 'grant microphone access in the button below';
+  static const String grantPermissionMessage = 'grant microphone access to record audio';
   static const String grantPermissionButton = 'grant permission';
-  static const String permissionDeniedMessage = 'Microphone permission denied';
-  static const String failedToStartRecorderMessage = 'Failed to start recorder';
+  static const String denyPermissionButton = 'deny permission';
+  static const String permissionDeniedMessage = 'microphone permission denied';
+  static const String failedToStartRecorderMessage = 'failed to start recorder';
+  static const String failedToGetDownloadDirectoryMessage = 'failed to get download directory';
+  static const String recordingSavedMessage = 'recording saved into downloads folder';
+  static const String failedToStopRecorderMessage = 'failed to stop recorder';
 }
 
 void main() {
@@ -181,7 +185,7 @@ class _HomePageState extends State<HomePage> {
     Directory directory = Directory('/storage/emulated/0/Download');
     if (!await directory.exists()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to get download directory')),
+        SnackBar(content: Text(AppStrings.failedToGetDownloadDirectoryMessage)),
       );
       return;
     }
@@ -215,27 +219,35 @@ class _HomePageState extends State<HomePage> {
     showDialog<void>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('Permission Denied'),
-        content: const Text('Allow access to the microphone.'),
+        title: const Text(AppStrings.permissionDeniedMessage, textAlign: TextAlign.center),
+        content: const Text(AppStrings.grantPermissionMessage, textAlign: TextAlign.center),
         actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => openAppSettings(),
-            child: const Text('Settings'),
+          Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(AppStrings.denyPermissionButton),
+                ),
+                SizedBox(width: 54),
+                TextButton(
+                  onPressed: () => openAppSettings(),
+                  child: const Text(AppStrings.grantPermissionButton),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
-
+  
   Future<void> _startRecording() async {
     Directory directory = Directory('/storage/emulated/0/Download');
     if (!await directory.exists()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to get download directory')),
+        SnackBar(content: Text(AppStrings.failedToGetDownloadDirectoryMessage)),
       );
       return;
     }
@@ -278,7 +290,7 @@ class _HomePageState extends State<HomePage> {
     if (filePath != null) {
       File file = File(_recordedFilePath!);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('recording saved into downloads folder')),
+        SnackBar(content: Text(AppStrings.recordingSavedMessage)),
       );
       await _transcribeAudio(file);
     } else {
@@ -287,7 +299,7 @@ class _HomePageState extends State<HomePage> {
         _showDownloadButton = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to stop recorder')),
+        SnackBar(content: Text(AppStrings.failedToStopRecorderMessage)),
       );
     }
   }
@@ -296,7 +308,21 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: GestureDetector(
+          onTap: () {
+            setState(() {
+              _transcription = AppStrings.initialMessage;
+              _isProcessing = false;
+              _fileId = '';
+              _shouldCheckStatus = false;
+              _fileName = '';
+              _isRecording = false;
+              _recordedFilePath = null;
+              _showDownloadButton = false;
+            });
+          },
+          child: Text(widget.title),
+        ),
       ),
       body: Center(
         child: Column(
