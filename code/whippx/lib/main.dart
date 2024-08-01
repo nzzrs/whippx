@@ -90,7 +90,7 @@ class _HomePageState extends State<HomePage> {
     });
 
     // crea una solicitud HTTP de tipo multipart para enviar el archivo de audio
-    final request = http.MultipartRequest('POST', Uri.parse('https://whippx-server.onrender.com/transcribe'));
+    final request = http.MultipartRequest('POST', Uri.parse('https://liberal-hopelessly-deer.ngrok-free.app/transcribe')); // actualiza la URL para usar ngrok
     // agrega el archivo de audio a la solicitud
     request.files.add(await http.MultipartFile.fromPath('file', audioFile.path));
 
@@ -101,11 +101,9 @@ class _HomePageState extends State<HomePage> {
     if (response.statusCode == 200) {
       // convierte la respuesta del servidor a una cadena de texto
       final responseBody = await response.stream.bytesToString();
-      // decodifica la respuesta JSON a un mapa de Dart
-      final result = json.decode(responseBody);
       // actualiza el estado con la transcripción recibida del servidor
       setState(() {
-        _transcription = result.toString();
+        _transcription = responseBody;
         _isProcessing = false;
       });
     } else {
@@ -148,15 +146,18 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             // widget de texto para mostrar la transcripción o el mensaje inicial
-            Text(
-              _transcription,
-              // estilo del texto, con tamaño de letra pequeño
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 16),
-              // alineación del texto al centro
-              textAlign: TextAlign.center,
+            Container(
+              margin: const EdgeInsets.all(20.0), // agrega un margen de media pulgada alrededor del texto
+              child: Text(
+                _transcription,
+                // estilo del texto, con tamaño de letra pequeño
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 16),
+                // alineación del texto al centro
+                textAlign: TextAlign.center,
+              ),
             ),
             // blank space
-            SizedBox(height: 16),
+            const SizedBox(height: 16), // espacio entre el texto y el indicador de progreso
             // muestra un indicador de progreso si el archivo se está procesando
             if (_isProcessing)
               const CircularProgressIndicator(),
