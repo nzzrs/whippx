@@ -26,14 +26,17 @@ class AppStrings {
   static const String transcriptionFileSuffix = 'transcription';
   static const String downloadSnackBarMessage = 'transcription downloaded to';
   static const String stopRecordingTooltip = 'stop recording';
-  static const String grantPermissionMessage = 'grant microphone access to record audio';
+  static const String grantPermissionMessage = 'grant microphone access in the button below';
   static const String grantPermissionButton = 'grant permission';
-  static const String denyPermissionButton = 'deny permission';
   static const String permissionDeniedMessage = 'microphone permission denied';
   static const String failedToStartRecorderMessage = 'failed to start recorder';
-  static const String failedToGetDownloadDirectoryMessage = 'failed to get download directory';
+  static const String denyPermissionButton = 'deny';
+  static const String failedToGetDownloadDirectoryMessage = 'Failed to get download directory';
   static const String recordingSavedMessage = 'recording saved into downloads folder';
-  static const String failedToStopRecorderMessage = 'failed to stop recorder';
+  static const String failedToStopRecorderMessage = 'Failed to stop recorder';
+  static const String language = 'language';
+  static const String english = 'english';
+  static const String spanish = 'spanish';
 }
 
 void main() {
@@ -79,6 +82,7 @@ class _HomePageState extends State<HomePage> {
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   String? _recordedFilePath;
   bool _showDownloadButton = false;
+  String _selectedLanguage = AppStrings.english;
 
   @override
   void initState() {
@@ -242,7 +246,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-  
+
   Future<void> _startRecording() async {
     Directory directory = Directory('/storage/emulated/0/Download');
     if (!await directory.exists()) {
@@ -304,6 +308,42 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _showLanguageDialog() async {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text(AppStrings.language, textAlign: TextAlign.center),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            RadioListTile<String>(
+              title: const Text(AppStrings.english),
+              value: AppStrings.english,
+              groupValue: _selectedLanguage,
+              onChanged: (String? value) {
+                setState(() {
+                  _selectedLanguage = value!;
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+            RadioListTile<String>(
+              title: const Text(AppStrings.spanish),
+              value: AppStrings.spanish,
+              groupValue: _selectedLanguage,
+              onChanged: (String? value) {
+                setState(() {
+                  _selectedLanguage = value!;
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -323,6 +363,22 @@ class _HomePageState extends State<HomePage> {
           },
           child: Text(widget.title),
         ),
+        actions: <Widget>[
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.menu),
+            onSelected: (String result) {
+              if (result == 'language') {
+                _showLanguageDialog();
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: 'language',
+                child: Text('${AppStrings.language}: $_selectedLanguage'),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Center(
         child: Column(
@@ -361,7 +417,6 @@ class _HomePageState extends State<HomePage> {
           FloatingActionButton(
             onPressed: _isRecording ? _stopRecording : _requestPermissionAndStartRecording,
             tooltip: _isRecording ? AppStrings.stopRecordingTooltip : AppStrings.transcribeTooltip,
-            backgroundColor: _isRecording ? null : null,
             child: Icon(_isRecording ? Icons.stop : Icons.mic, color: _isRecording ? Theme.of(context).colorScheme.error : null),
           ),
         ],
