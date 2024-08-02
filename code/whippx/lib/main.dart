@@ -12,31 +12,87 @@ import 'package:path/path.dart' as p;
 
 class AppStrings {
   static const String appTitle = 'whippx';
-  static const String initialMessage = 'this is whippx. select an audio file or record to transcribe';
-  static const String processingMessage = 'processing';
-  static const String recordingMessage = 'recording...';
-  static const String errorTranscribing = 'error transcribing audio';
-  static const String serverSleeping = 'shhh, server sleeping...';
-  static const String internalServerError = 'internal server error';
-  static const String fileNotFound = 'server looking for your file';
-  static const String transcribeTooltip = 'record';
-  static const String selectFileTooltip = 'select file';
-  static const String downloadTooltip = 'download';
-  static const String recordedFile = 'recorded file';
-  static const String transcriptionFileSuffix = 'transcription';
-  static const String downloadSnackBarMessage = 'transcription downloaded to';
-  static const String stopRecordingTooltip = 'stop recording';
-  static const String grantPermissionMessage = 'grant microphone access in the button below';
-  static const String grantPermissionButton = 'grant permission';
-  static const String permissionDeniedMessage = 'microphone permission denied';
-  static const String failedToStartRecorderMessage = 'failed to start recorder';
-  static const String denyPermissionButton = 'deny';
-  static const String failedToGetDownloadDirectoryMessage = 'Failed to get download directory';
-  static const String recordingSavedMessage = 'recording saved into downloads folder';
-  static const String failedToStopRecorderMessage = 'Failed to stop recorder';
-  static const String language = 'language';
-  static const String english = 'english';
-  static const String spanish = 'spanish';
+  static String initialMessage = 'this is whippx. select an audio file or record to transcribe';
+  static String processingMessage = 'processing';
+  static String recordingMessage = 'recording...';
+  static String errorTranscribing = 'error transcribing audio';
+  static String serverSleeping = 'shhh, server sleeping...';
+  static String internalServerError = 'internal server error';
+  static String fileNotFound = 'server looking for your file';
+  static String transcribeTooltip = 'record';
+  static String selectFileTooltip = 'select file';
+  static String downloadTooltip = 'download';
+  static String recordedFile = 'recorded file';
+  static String transcriptionFileSuffix = 'transcription';
+  static String downloadSnackBarMessage = 'transcription downloaded to';
+  static String stopRecordingTooltip = 'stop recording';
+  static String grantPermissionMessage = 'grant microphone access in the button below';
+  static String grantPermissionButton = 'grant permission';
+  static String permissionDeniedMessage = 'microphone permission denied';
+  static String failedToStartRecorderMessage = 'failed to start recorder';
+  static String denyPermissionButton = 'deny';
+  static String failedToGetDownloadDirectoryMessage = 'failed to get download directory';
+  static String recordingSavedMessage = 'recording saved into downloads folder';
+  static String failedToStopRecorderMessage = 'failed to stop recorder';
+  static String language = 'language';
+  static String english = 'english';
+  static String spanish = 'spanish';
+
+  static void setSpanish() {
+    initialMessage = 'seleccionar un archivo de audio o grabar para transcribir';
+    processingMessage = 'procesando';
+    recordingMessage = 'grabando...';
+    errorTranscribing = 'error al transcribir el audio';
+    serverSleeping = 'shhh, servidor mimiendo...';
+    internalServerError = 'error interno del servidor';
+    fileNotFound = 'servidor buscando su archivo';
+    transcribeTooltip = 'grabar';
+    selectFileTooltip = 'seleccionar archivo';
+    downloadTooltip = 'descargar';
+    recordedFile = 'archivo grabado';
+    transcriptionFileSuffix = 'transcripción';
+    downloadSnackBarMessage = 'transcripción descargada a';
+    stopRecordingTooltip = 'detener grabación';
+    grantPermissionMessage = 'otorgar acceso al micrófono en el botón de abajo';
+    grantPermissionButton = 'otorgar permiso';
+    permissionDeniedMessage = 'permiso de micrófono denegado';
+    failedToStartRecorderMessage = 'no se pudo iniciar la grabadora de voz';
+    denyPermissionButton = 'denegar';
+    failedToGetDownloadDirectoryMessage = 'no se pudo obtener el directorio de descargas';
+    recordingSavedMessage = 'grabación guardada en la carpeta de descargas';
+    failedToStopRecorderMessage = 'no se pudo detener la grabadora';
+    language = 'idioma';
+    english = 'inglés';
+    spanish = 'español';
+  }
+
+  static void setEnglish() {
+    initialMessage = 'this is whippx. select an audio file or record to transcribe';
+    processingMessage = 'processing';
+    recordingMessage = 'recording...';
+    errorTranscribing = 'error transcribing audio';
+    serverSleeping = 'shhh, server sleeping...';
+    internalServerError = 'internal server error';
+    fileNotFound = 'server looking for your file';
+    transcribeTooltip = 'record';
+    selectFileTooltip = 'select file';
+    downloadTooltip = 'download';
+    recordedFile = 'recorded file';
+    transcriptionFileSuffix = 'transcription';
+    downloadSnackBarMessage = 'transcription downloaded to';
+    stopRecordingTooltip = 'stop recording';
+    grantPermissionMessage = 'grant microphone access in the button below';
+    grantPermissionButton = 'grant permission';
+    permissionDeniedMessage = 'microphone permission denied';
+    failedToStartRecorderMessage = 'failed to start recorder';
+    denyPermissionButton = 'deny';
+    failedToGetDownloadDirectoryMessage = 'failed to get download directory';
+    recordingSavedMessage = 'recording saved into downloads folder';
+    failedToStopRecorderMessage = 'failed to stop recorder';
+    language = 'language';
+    english = 'english';
+    spanish = 'spanish';
+  }
 }
 
 void main() {
@@ -223,24 +279,17 @@ class _HomePageState extends State<HomePage> {
     showDialog<void>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text(AppStrings.permissionDeniedMessage, textAlign: TextAlign.center),
-        content: const Text(AppStrings.grantPermissionMessage, textAlign: TextAlign.center),
+        title: Text(AppStrings.permissionDeniedMessage, textAlign: TextAlign.center),
+        content: Text(AppStrings.grantPermissionMessage, textAlign: TextAlign.center),
         actions: <Widget>[
-          Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(AppStrings.denyPermissionButton),
-                ),
-                SizedBox(width: 54),
-                TextButton(
-                  onPressed: () => openAppSettings(),
-                  child: const Text(AppStrings.grantPermissionButton),
-                ),
-              ],
-            ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(AppStrings.denyPermissionButton),
+          ),
+          const SizedBox(width: 12.0),
+          TextButton(
+            onPressed: () => openAppSettings(),
+            child: Text(AppStrings.grantPermissionButton),
           ),
         ],
       ),
@@ -312,28 +361,32 @@ class _HomePageState extends State<HomePage> {
     showDialog<void>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text(AppStrings.language, textAlign: TextAlign.center),
+        title: Text(AppStrings.language, textAlign: TextAlign.center),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             RadioListTile<String>(
-              title: const Text(AppStrings.english),
+              title: Text(AppStrings.english),
               value: AppStrings.english,
               groupValue: _selectedLanguage,
               onChanged: (String? value) {
                 setState(() {
-                  _selectedLanguage = value!;
+                  AppStrings.setEnglish();
+                  _selectedLanguage = AppStrings.english;
+                  _resetHomePage();
                 });
                 Navigator.of(context).pop();
               },
             ),
             RadioListTile<String>(
-              title: const Text(AppStrings.spanish),
+              title: Text(AppStrings.spanish),
               value: AppStrings.spanish,
               groupValue: _selectedLanguage,
               onChanged: (String? value) {
                 setState(() {
-                  _selectedLanguage = value!;
+                  AppStrings.setSpanish();
+                  _selectedLanguage = AppStrings.spanish;
+                  _resetHomePage();
                 });
                 Navigator.of(context).pop();
               },
@@ -344,23 +397,25 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _resetHomePage() {
+    setState(() {
+      _transcription = AppStrings.initialMessage;
+      _isProcessing = false;
+      _fileId = '';
+      _shouldCheckStatus = false;
+      _fileName = '';
+      _isRecording = false;
+      _recordedFilePath = null;
+      _showDownloadButton = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
-          onTap: () {
-            setState(() {
-              _transcription = AppStrings.initialMessage;
-              _isProcessing = false;
-              _fileId = '';
-              _shouldCheckStatus = false;
-              _fileName = '';
-              _isRecording = false;
-              _recordedFilePath = null;
-              _showDownloadButton = false;
-            });
-          },
+          onTap: _resetHomePage,
           child: Text(widget.title),
         ),
         actions: <Widget>[
@@ -417,6 +472,7 @@ class _HomePageState extends State<HomePage> {
           FloatingActionButton(
             onPressed: _isRecording ? _stopRecording : _requestPermissionAndStartRecording,
             tooltip: _isRecording ? AppStrings.stopRecordingTooltip : AppStrings.transcribeTooltip,
+            backgroundColor: _isRecording ? null : null,
             child: Icon(_isRecording ? Icons.stop : Icons.mic, color: _isRecording ? Theme.of(context).colorScheme.error : null),
           ),
         ],
