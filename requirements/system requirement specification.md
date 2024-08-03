@@ -233,12 +233,12 @@ error --> end_
 
 ### rq07 - visual style similar to markdown notes
 
-| description          | the application's visual style should resemble markdown notes in Obsidian, with ressemblance to logseq. |
-| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| description          | the application's visual style should resemble markdown notes in obsidian, with ressemblance to logseq.  |
+| -------------------- | -------------------------------------------------------------------------------------------------------- |
 | observations         | this includes the use of simple, clean design elements and a focus on text-based interfaces when needed. |
-| priority             | low                                                                                                     |
-| stability            | stable                                                                                                  |
-| associated user type | user                                                                                                    |
+| priority             | low                                                                                                      |
+| stability            | stable                                                                                                   |
+| associated user type | user                                                                                                     |
 
 
 ### rq08 - smooth and simple animations
@@ -253,12 +253,12 @@ error --> end_
 
 ### rq09 - initial window characteristics
 
-| description          | the initial window of the application should have a large microphone icon in the center with wave animations similar to Shazam when activated. it should also include an "open" icon in one corner and the app name in the other corner. |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| observations         | the design should be visually appealing and provide clear guidance on starting a recording session.                                                                                                                                      |
-| priority             | medium                                                                                                                                                                                                                                   |
-| stability            | stable                                                                                                                                                                                                                                   |
-| associated user type | user                                                                                                                                                                                                                                     |
+| description          | the initial window should include the app name in the upper left corner.                            |
+| -------------------- | --------------------------------------------------------------------------------------------------- |
+| observations         | the design should be visually appealing and provide clear guidance on starting a recording session. |
+| priority             | medium                                                                                              |
+| stability            | stable                                                                                              |
+| associated user type | user                                                                                                |
 
 
 ### rq10 - color palette and background

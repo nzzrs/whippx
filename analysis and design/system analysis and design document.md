@@ -8,7 +8,7 @@ this document provides a comprehensive analysis and design for whisperx.
 the system is designed to provide transcription services for audio files and audio recording. it aims to assist users by converting spoken words into text, facilitating the creation of written records of audio content. the system also allows users to save both transcribed text and recorded audio files locally.
 
 ### system architecture
-the system is built using flutter for cross-platform mobile development, and utilizes whisperx for transcription services on a remote server running in render. the app is designed to run on both android and ios platforms.
+the system is built using flutter for cross-platform mobile development, and utilizes whisperx for transcription services on a remote server. the app is designed to run on both android and ios platforms.
 
 ## high-level design
 
@@ -22,24 +22,22 @@ subgraph flutter_app [flutter application]
 
     ui[user interface]
     logic[business logic]
-    whisperx_api[whisperx api]
     storage[local storage]
 
 end
 
-subgraph render_server [render server]
+subgraph server [server]
 
     whisperx_service[whisperx service]
 
 end
 
-user --> ui
 ui --> logic
-logic --> whisperx_api
 logic --> storage
-whisperx_api -->|transcription request| whisperx_service
-whisperx_service -->|transcription response| whisperx_api
+logic --> api
 storage -->|save/load files| logic
+api -->|transcription request| whisperx_service
+whisperx_service -->|transcription response| api
 ```
 
 ### components diagram
@@ -58,18 +56,17 @@ subgraph flutter_app [flutter application]
 
 end
 
-subgraph render_server [render server]
+subgraph server [server]
 
     whisperx_service[whisperx service]
 
 end
 
-user --> ui
 ui --> audio_manager
 audio_manager --> transcription_service
 audio_manager --> file_manager
-transcription_service --> whisperx_api
-whisperx_api --> whisperx_service
+transcription_service --> api
+api --> whisperx_service
 file_manager --> storage
 ```
 
@@ -80,48 +77,10 @@ file_manager --> storage
 - **transcription service**: interfaces with whisperx to transcribe audio.
 - **file manager**: manages the saving and loading of audio and text files.
 - **local storage**: provides the mechanism for storing files on the device.
-- **whisperx api**: sends transcription requests to the whisperx service on the render server.
-- **render server**: remote server hosting the whisperx service.
+- **api**: sends transcription requests to the whisperx service on the remote server.
+- **server**: remote server hosting the whisperx service.
 
 ## detailed design
-
-### class diagram
-
-```mermaid
-%%{init: {"theme": "dark", "flowchart": {"curve": "linear", "useMaxWidth": false}}}%%
-classDiagram
-
-class ui {
-    - start_recording()
-    - stop_recording()
-    - save_transcription()
-}
-
-class audio_manager {
-    - record_audio()
-    - stop_recording()
-}
-
-class transcription_service {
-    - transcribe_audio()
-}
-
-class file_manager {
-    - save_file()
-    - load_file()
-}
-
-class local_storage {
-    - store_data()
-    - retrieve_data()
-}
-
-class whisperx_api {
-    - send_request()
-    - receive_response()
-}
-
-```
 
 ### sequence diagrams
 
@@ -211,10 +170,8 @@ stateDiagram-v2
 
 ### platform and environment
 - **platforms**: android and ios
-- **environment**: developed using flutter, integrated with whisperx for transcription services hosted on render
-- **server service**: render
+- **environment**: developed using flutter, integrated with whisperx for transcription
 
 ### technologies and tools
 - **flutter**: cross-platform mobile development framework
 - **whisperx**: transcription model
-- **emacs**: ide

@@ -24,19 +24,29 @@ section sprint 1
 section sprint 2
 
 	training                   :b1, 2024-07-21, 3d
-	uc01 essays                :b2, after b1,   2d
+	app essays                :b2, after b1,   2d
 	report                     :b3, after b2,   1d
 
 section sprint 3
 
-	uc01 implementation        :c1, 2024-07-28, 4d
+	initial implementation        :c1, 2024-07-28, 4d
 	proofs                     :c2, after c1,   2d
 	report                     :c3, after c2,   1d
 
 section sprint 4
 
-	uc02 implementation        :d1, 2024-08-05, 4d
+	fix bugs        :d1, 2024-08-05, 4d
 	proofs                     :d2, after d1,   2d
 	report                     :d3, after d2,   1d
 
 ```
+
+
+## to do list
+
+- [ ] 2 - enhance in-app error report
+- [ ] 1 - fix app loosing track of the transcription process
+- [ ] 4 - find an online service to run the server
+- [ ] 4 - fix server-ran-out-of-memory issue
+- [ ] 1 - fix app not detecting server problems
+- [ ] 3 - abstract server url

@@ -362,36 +362,38 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: Text(AppStrings.language, textAlign: TextAlign.center),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            RadioListTile<String>(
-              title: Text(AppStrings.english),
-              value: AppStrings.english,
-              groupValue: _selectedLanguage,
-              onChanged: (String? value) {
-                setState(() {
-                  AppStrings.setEnglish();
-                  _selectedLanguage = AppStrings.english;
-                  _resetHomePage();
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-            RadioListTile<String>(
-              title: Text(AppStrings.spanish),
-              value: AppStrings.spanish,
-              groupValue: _selectedLanguage,
-              onChanged: (String? value) {
-                setState(() {
-                  AppStrings.setSpanish();
-                  _selectedLanguage = AppStrings.spanish;
-                  _resetHomePage();
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              RadioListTile<String>(
+                title: Text(AppStrings.english),
+                value: AppStrings.english,
+                groupValue: _selectedLanguage,
+                onChanged: (String? value) {
+                  setState(() {
+                    AppStrings.setEnglish();
+                    _selectedLanguage = AppStrings.english;
+                    _resetHomePage();
+                  });
+                  Navigator.of(context).pop();
+                },
+              ),
+              RadioListTile<String>(
+                title: Text(AppStrings.spanish),
+                value: AppStrings.spanish,
+                groupValue: _selectedLanguage,
+                onChanged: (String? value) {
+                  setState(() {
+                    AppStrings.setSpanish();
+                    _selectedLanguage = AppStrings.spanish;
+                    _resetHomePage();
+                  });
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -436,20 +438,24 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              margin: const EdgeInsets.all(20.0),
-              child: Text(
-                _transcription,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 16),
-                textAlign: _isProcessing ? TextAlign.center : TextAlign.left,
-              ),
+        child: SingleChildScrollView(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  margin: const EdgeInsets.all(20.0),
+                  child: Text(
+                    _transcription,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 16),
+                    textAlign: _isProcessing ? TextAlign.center : TextAlign.left,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_isProcessing) const CircularProgressIndicator(),
+              ],
             ),
-            const SizedBox(height: 16),
-            if (_isProcessing) const CircularProgressIndicator(),
-          ],
+          ),
         ),
       ),
       floatingActionButton: Row(
