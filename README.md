@@ -2,7 +2,7 @@
 
 ---
 
-> Flutter app that translates audio files using WhisperX
+app that translates audio files using whisperx
 
 ---
 
@@ -13,12 +13,10 @@
 	╚███╔███╔╝██║  ██║██║██║     ██║     ██╔╝ ██╗
 	 ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝╚═╝     ╚═╝     ╚═╝  ╚═╝
  
-	 loading |=========================--------|
+	 -------------      alpha      -------------
 
 
-in development. for details, go into the [project plan](management/project%20plan.md).
-
-app and server work. they are still in development, so it isn't any release yet, but you can build the app and run the server - changing the url - and they may work for android devices and linux servers.
+the app and server work. since this is an alpha version, it isn't a release yet, but you can build the app and run the server and they may work for android and linux platforms, respectively.
 
 
 
