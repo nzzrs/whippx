@@ -8,10 +8,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppStrings {
   static const String appTitle = 'whippx';
+  static String currentLanguage = '#####';
   static String initialMessage = 'this is whippx. select an audio file or record to transcribe';
   static String processingMessage = 'processing';
   static String recordingMessage = 'recording...';
@@ -39,9 +40,12 @@ class AppStrings {
   static String language = 'language';
   static String english = 'english';
   static String spanish = 'spanish';
+  static String cancelTooltip = 'cancel';
+  static String transcriptionCanceledMessage = 'transcription cancelled';
 
   static void setSpanish() {
-    initialMessage = 'seleccionar un archivo de audio o grabar para tanscribir';
+    currentLanguage = 'español';
+    initialMessage = 'seleccionar un archivo de audio o grabar para transcribir';
     processingMessage = 'procesando';
     recordingMessage = 'grabando...';
     errorTranscribing = 'error al transcribir el audio';
@@ -68,9 +72,12 @@ class AppStrings {
     language = 'idioma';
     english = 'inglés';
     spanish = 'español';
+    cancelTooltip = 'cancelar';
+    transcriptionCanceledMessage = 'transcripción cancelada';
   }
 
   static void setEnglish() {
+    currentLanguage = 'english';
     initialMessage = 'this is whippx. select an audio file or record to transcribe';
     processingMessage = 'processing';
     recordingMessage = 'recording...';
@@ -98,10 +105,28 @@ class AppStrings {
     language = 'language';
     english = 'english';
     spanish = 'spanish';
+    cancelTooltip = 'cancel';
+    transcriptionCanceledMessage = 'transcription cancelled';
   }
 }
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String selectedLanguage = prefs.getString('language') ?? 'en';
+
+  switch (selectedLanguage) {
+    case 'es':
+    AppStrings.setSpanish();
+    break;
+    case 'en':
+    AppStrings.setEnglish();
+    break;
+    default:
+    AppStrings.setEnglish();
+    break;
+  }
+
   runApp(const WhippxApp());
 }
 
@@ -136,23 +161,47 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String _transcription = '';
-  bool _isProcessing = false;
+  bool _waitingResponse = false;
   String _fileId = '';
-  bool _shouldCheckStatus = false;
   String _fileName = '';
   bool _isRecording = false;
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   String? _recordedFilePath;
   bool _showDownloadButton = false;
   String _selectedLanguage = '';
+  SharedPreferences? _prefs;
 
   @override
   void initState() {
     super.initState();
-    AppStrings.setSpanish();
-    _selectedLanguage = AppStrings.spanish;
-    _transcription = AppStrings.initialMessage;
+    _initializePreferences();
     _initializeRecorder();
+  }
+
+  Future<void> _initializePreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+    _selectedLanguage = _prefs?.getString('language') ?? 'en';
+
+    switch (_selectedLanguage) {
+      case 'es':
+      AppStrings.setSpanish();
+      break;
+      case 'en':
+      AppStrings.setEnglish();
+      break;
+      default:
+      AppStrings.setEnglish();
+      break;
+    }
+
+    _transcription = AppStrings.initialMessage;
+
+    String? lastFileId = _prefs?.getString('last_file_id');
+    if (lastFileId != null) {
+      _fileId = lastFileId;
+      _waitingResponse = true;
+      _checkTranscriptionStatus();
+    }
   }
 
   Future<void> _initializeRecorder() async {
@@ -170,8 +219,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _fileName = path.basenameWithoutExtension(audioFile.path);
       _transcription = '${AppStrings.processingMessage} ${path.basename(audioFile.path)}';
-      _isProcessing = true;
-      _shouldCheckStatus = true;
+      _waitingResponse = true;
       _showDownloadButton = false;
     });
 
@@ -184,78 +232,77 @@ class _HomePageState extends State<HomePage> {
       final responseBody = await response.stream.bytesToString();
       final jsonResponse = json.decode(responseBody);
       _fileId = jsonResponse['file_id'];
+      await _prefs?.setString('last_file_id', _fileId);
       _checkTranscriptionStatus();
     } else {
       setState(() {
         _transcription = AppStrings.internalServerError;
-        _isProcessing = false;
-        _shouldCheckStatus = false;
+        _waitingResponse = false;
         _showDownloadButton = false;
       });
     }
   }
 
   Future<void> _checkTranscriptionStatus() async {
-    while (_shouldCheckStatus) {
-      await Future.delayed(const Duration(seconds: 10));
+    while (_waitingResponse && _prefs?.getString('last_file_id') != null) {
       final response = await http.get(Uri.parse('https://liberal-hopelessly-deer.ngrok-free.app/get-response?file_id=$_fileId'));
 
       if (response.statusCode == 200) {
         setState(() {
           _transcription = response.body;
-          _isProcessing = false;
-          _shouldCheckStatus = false;
+          _waitingResponse = false;
           _showDownloadButton = true;
+          _prefs?.remove('last_file_id');
         });
       } else if (response.statusCode == 502) {
         setState(() {
           _transcription = AppStrings.serverSleeping;
-          _isProcessing = false;
-          _shouldCheckStatus = false;
+          _waitingResponse = false;
           _showDownloadButton = false;
+          _prefs?.remove('last_file_id');
         });
       } else if (response.statusCode == 404) {
         final responseBody = json.decode(response.body);
         switch (responseBody['error'] ?? responseBody['status']) {
           case "file not found":
-          setState(() {
+            setState(() {
               _transcription = AppStrings.fileNotFound;
-              _isProcessing = true;
+              _waitingResponse = true;
               _showDownloadButton = false;
-              _shouldCheckStatus = true;
-          });
-          break;
+            });
+            break;
           case "processing":
-          setState(() {
+            setState(() {
               _transcription = AppStrings.processingMessage;
-              _isProcessing = true;
+              _waitingResponse = true;
               _showDownloadButton = false;
-              _shouldCheckStatus = true;
-          });
-          break;
+            });
+            break;
           case "unknown error":
-          setState(() {
+            setState(() {
               _transcription = AppStrings.unknownError;
-              _isProcessing = false;
-              _shouldCheckStatus = false;
+              _waitingResponse = false;
               _showDownloadButton = false;
-          });
-          break;
+              _prefs?.remove('last_file_id');
+            });
+            break;
           default:
-          setState(() {
+            setState(() {
               _transcription = AppStrings.unknownResponse;
-              _isProcessing = false;
-              _shouldCheckStatus = false;
+              _waitingResponse = false;
               _showDownloadButton = false;
-          });
-          break;
+              _prefs?.remove('last_file_id');
+            });
+            break;
         }
+        
+      await Future.delayed(const Duration(seconds: 10));
       } else {
         setState(() {
           _transcription = AppStrings.internalServerError;
-          _isProcessing = false;
-          _shouldCheckStatus = false;
+          _waitingResponse = false;
           _showDownloadButton = false;
+          _prefs?.remove('last_file_id');
         });
       }
     }
@@ -402,7 +449,8 @@ class _HomePageState extends State<HomePage> {
                 onChanged: (String? value) {
                   setState(() {
                     AppStrings.setEnglish();
-                    _selectedLanguage = AppStrings.english;
+                    _selectedLanguage = 'en';
+                    _prefs?.setString('language', _selectedLanguage);
                     _resetHomePage();
                   });
                   Navigator.of(context).pop();
@@ -415,7 +463,8 @@ class _HomePageState extends State<HomePage> {
                 onChanged: (String? value) {
                   setState(() {
                     AppStrings.setSpanish();
-                    _selectedLanguage = AppStrings.spanish;
+                    _selectedLanguage = 'es';
+                    _prefs?.setString('language', _selectedLanguage);
                     _resetHomePage();
                   });
                   Navigator.of(context).pop();
@@ -431,13 +480,21 @@ class _HomePageState extends State<HomePage> {
   void _resetHomePage() {
     setState(() {
       _transcription = AppStrings.initialMessage;
-      _isProcessing = false;
+      _waitingResponse = false;
       _fileId = '';
-      _shouldCheckStatus = false;
       _fileName = '';
       _isRecording = false;
       _recordedFilePath = null;
       _showDownloadButton = false;
+    });
+  }
+
+  void _cancelTranscription() {
+    setState(() {
+      _fileId = '';
+      _prefs?.remove('last_file_id');
+      _waitingResponse = false;
+      _transcription = AppStrings.transcriptionCanceledMessage;
     });
   }
 
@@ -460,7 +517,7 @@ class _HomePageState extends State<HomePage> {
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               PopupMenuItem<String>(
                 value: 'language',
-                child: Text('${AppStrings.language}: $_selectedLanguage'),
+                child: Text('${AppStrings.language}: ${AppStrings.currentLanguage}'),
               ),
             ],
           ),
@@ -477,11 +534,11 @@ class _HomePageState extends State<HomePage> {
                   child: Text(
                     _transcription,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 16),
-                    textAlign: _isProcessing ? TextAlign.center : TextAlign.left,
+                    textAlign: _waitingResponse ? TextAlign.center : TextAlign.left,
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (_isProcessing) const CircularProgressIndicator(),
+                if (_waitingResponse) const CircularProgressIndicator(),
               ],
             ),
           ),
@@ -498,18 +555,27 @@ class _HomePageState extends State<HomePage> {
               child: Icon(Icons.download, color: Theme.of(context).colorScheme.onPrimary),
             ),
           const SizedBox(width: 16),
-          FloatingActionButton(
-            onPressed: _pickFile,
-            tooltip: AppStrings.selectFileTooltip,
-            child: const Icon(Icons.folder),
-          ),
+          if (_waitingResponse)
+            FloatingActionButton(
+              onPressed: _cancelTranscription,
+              tooltip: AppStrings.cancelTooltip,
+              backgroundColor: Theme.of(context).colorScheme.error,
+              child: Icon(Icons.close, color: Theme.of(context).colorScheme.onError),
+            ),
+          if (!_waitingResponse)
+            FloatingActionButton(
+              onPressed: _pickFile,
+              tooltip: AppStrings.selectFileTooltip,
+              child: const Icon(Icons.folder),
+            ),
           const SizedBox(width: 16),
-          FloatingActionButton(
-            onPressed: _isRecording ? _stopRecording : _requestPermissionAndStartRecording,
-            tooltip: _isRecording ? AppStrings.stopRecordingTooltip : AppStrings.transcribeTooltip,
-            backgroundColor: _isRecording ? null : null,
-            child: Icon(_isRecording ? Icons.stop : Icons.mic, color: _isRecording ? Theme.of(context).colorScheme.error : null),
-          ),
+          if (!_waitingResponse)
+            FloatingActionButton(
+              onPressed: _isRecording ? _stopRecording : _requestPermissionAndStartRecording,
+              tooltip: _isRecording ? AppStrings.stopRecordingTooltip : AppStrings.transcribeTooltip,
+              backgroundColor: _isRecording ? null : null,
+              child: Icon(_isRecording ? Icons.stop : Icons.mic, color: _isRecording ? Theme.of(context).colorScheme.error : null),
+            ),
         ],
       ),
     );

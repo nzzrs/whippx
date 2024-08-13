@@ -47,7 +47,7 @@ section sprint 4
 - [x] 2 - enhance in-app error report
 - [x] 1 - fix app loosing track of the transcription process
 - [ ] 4 - find an online service to run the server
-- [ ] 1 - add persistence
+- [x] 1 - add persistence
 - [ ] 4 - fix server-ran-out-of-memory issue
 - [x] 1 - fix app not detecting server problems
 - [ ] 3 - abstract server url
