@@ -27,6 +27,7 @@ def send_to_transcribe():
     if file:
         file_id = str(time.time())
         transcriptions[file_id] = {"status": "processing"}
+        print(f"Received file for transcription. File ID: {file_id}")
 
         def transcribe_file(file_content, file_id):
             with tempfile.NamedTemporaryFile(delete=False) as tmp:
@@ -37,6 +38,7 @@ def send_to_transcribe():
             result = model.transcribe(audio, batch_size=16)
             transcription_text = "\n".join([segment['text'] for segment in result["segments"]])
             transcriptions[file_id] = {"status": "completed", "transcription": transcription_text}
+            print(f"Transcription completed for File ID: {file_id}. Transcription:\n{transcription_text}")
 
         file_content = file.read()
         threading.Thread(target=transcribe_file, args=(file_content, file_id)).start()

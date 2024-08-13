@@ -50,4 +50,4 @@ section sprint 4
 - [x] 1 - add persistence
 - [ ] 4 - fix server-ran-out-of-memory issue
 - [x] 1 - fix app not detecting server problems
-- [ ] 3 - abstract server url
+- [x] 3 - abstract server url

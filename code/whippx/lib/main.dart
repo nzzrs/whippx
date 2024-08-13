@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppStrings {
   static const String appTitle = 'whippx';
@@ -112,6 +113,8 @@ class AppStrings {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String selectedLanguage = prefs.getString('language') ?? 'en';
 
@@ -223,7 +226,7 @@ class _HomePageState extends State<HomePage> {
       _showDownloadButton = false;
     });
 
-    final request = http.MultipartRequest('POST', Uri.parse('https://liberal-hopelessly-deer.ngrok-free.app/send-to-transcribe'));
+    final request = http.MultipartRequest('POST', Uri.parse('${dotenv.env['API_URL']}/send-to-transcribe'));
     request.files.add(await http.MultipartFile.fromPath('file', audioFile.path));
 
     final response = await request.send();
@@ -245,7 +248,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _checkTranscriptionStatus() async {
     while (_waitingResponse && _prefs?.getString('last_file_id') != null) {
-      final response = await http.get(Uri.parse('https://liberal-hopelessly-deer.ngrok-free.app/get-response?file_id=$_fileId'));
+      final response = await http.get(Uri.parse('${dotenv.env['API_URL']}/get-response?file_id=$_fileId'));
 
       if (response.statusCode == 200) {
         setState(() {
