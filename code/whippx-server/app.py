@@ -46,13 +46,17 @@ def send_to_transcribe():
 @app.route('/get-response', methods=['GET'])
 def get_response():
     file_id = request.args.get('file_id')
-    if not file_id or file_id not in transcriptions:
+    if file_id not in transcriptions:
         return jsonify({"error": "file not found"}), 404
 
     if transcriptions[file_id]["status"] == "completed":
         return transcriptions[file_id]["transcription"], 200
-    else:
+
+    if transcriptions[file_id]["status"] == "processing":
         return jsonify({"status": "processing"}), 404
+    
+    else:
+        return jsonify({"error": "unknown error"}), 404
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

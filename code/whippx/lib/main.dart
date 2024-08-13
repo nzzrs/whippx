@@ -19,6 +19,8 @@ class AppStrings {
   static String serverSleeping = 'shhh, server sleeping...';
   static String internalServerError = 'internal server error';
   static String fileNotFound = 'server looking for your file';
+  static String unknownError = 'unknown error';
+  static String unknownResponse = 'what happened??';
   static String transcribeTooltip = 'record';
   static String selectFileTooltip = 'select file';
   static String downloadTooltip = 'download';
@@ -39,13 +41,15 @@ class AppStrings {
   static String spanish = 'spanish';
 
   static void setSpanish() {
-    initialMessage = 'seleccionar un archivo de audio o grabar para transcribir';
+    initialMessage = 'seleccionar un archivo de audio o grabar para tanscribir';
     processingMessage = 'procesando';
     recordingMessage = 'grabando...';
     errorTranscribing = 'error al transcribir el audio';
     serverSleeping = 'shhh, servidor mimiendo...';
     internalServerError = 'error interno del servidor';
     fileNotFound = 'servidor buscando su archivo';
+    unknownError = 'error desconocido';
+    unknownResponse = 'qué pasó ayer?';
     transcribeTooltip = 'grabar';
     selectFileTooltip = 'seleccionar archivo';
     downloadTooltip = 'descargar';
@@ -74,6 +78,8 @@ class AppStrings {
     serverSleeping = 'shhh, server sleeping...';
     internalServerError = 'internal server error';
     fileNotFound = 'server looking for your file';
+    unknownError = 'unknown error';
+    unknownResponse = 'what happened??';
     transcribeTooltip = 'record';
     selectFileTooltip = 'select file';
     downloadTooltip = 'download';
@@ -129,7 +135,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String _transcription = AppStrings.initialMessage;
+  String _transcription = '';
   bool _isProcessing = false;
   String _fileId = '';
   bool _shouldCheckStatus = false;
@@ -138,11 +144,14 @@ class _HomePageState extends State<HomePage> {
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   String? _recordedFilePath;
   bool _showDownloadButton = false;
-  String _selectedLanguage = AppStrings.english;
+  String _selectedLanguage = '';
 
   @override
   void initState() {
     super.initState();
+    AppStrings.setSpanish();
+    _selectedLanguage = AppStrings.spanish;
+    _transcription = AppStrings.initialMessage;
     _initializeRecorder();
   }
 
@@ -207,19 +216,39 @@ class _HomePageState extends State<HomePage> {
         });
       } else if (response.statusCode == 404) {
         final responseBody = json.decode(response.body);
-        if (responseBody['error'] == "file not found") {
+        switch (responseBody['error'] ?? responseBody['status']) {
+          case "file not found":
           setState(() {
-            _transcription = AppStrings.fileNotFound;
-            _isProcessing = true;
-            _showDownloadButton = false;
-            _shouldCheckStatus = true;
+              _transcription = AppStrings.fileNotFound;
+              _isProcessing = true;
+              _showDownloadButton = false;
+              _shouldCheckStatus = true;
           });
-        } else {
+          break;
+          case "processing":
           setState(() {
-            _transcription = AppStrings.processingMessage;
-            _isProcessing = true;
-            _showDownloadButton = false;
+              _transcription = AppStrings.processingMessage;
+              _isProcessing = true;
+              _showDownloadButton = false;
+              _shouldCheckStatus = true;
           });
+          break;
+          case "unknown error":
+          setState(() {
+              _transcription = AppStrings.unknownError;
+              _isProcessing = false;
+              _shouldCheckStatus = false;
+              _showDownloadButton = false;
+          });
+          break;
+          default:
+          setState(() {
+              _transcription = AppStrings.unknownResponse;
+              _isProcessing = false;
+              _shouldCheckStatus = false;
+              _showDownloadButton = false;
+          });
+          break;
         }
       } else {
         setState(() {
