@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; 
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
@@ -26,9 +27,11 @@ class AppStrings {
   static String transcribeTooltip = 'record';
   static String selectFileTooltip = 'select file';
   static String downloadTooltip = 'download';
+  static String copyToClipboardTooltip = 'copy to clipboard'; 
   static String recordedFile = 'recorded file';
   static String transcriptionFileSuffix = 'transcription';
   static String downloadSnackBarMessage = 'transcription downloaded to';
+  static String copySnackBarMessage = 'transcription copied to clipboard'; 
   static String stopRecordingTooltip = 'stop recording';
   static String grantPermissionMessage = 'grant microphone access in the button below';
   static String grantPermissionButton = 'grant permission';
@@ -42,6 +45,7 @@ class AppStrings {
   static String english = 'english';
   static String spanish = 'spanish';
   static String cancelTooltip = 'cancel';
+  static String reloadTooltip = 'reload'; 
   static String transcriptionCanceledMessage = 'transcription cancelled';
 
   static void setSpanish() {
@@ -58,9 +62,11 @@ class AppStrings {
     transcribeTooltip = 'grabar';
     selectFileTooltip = 'seleccionar archivo';
     downloadTooltip = 'descargar';
+    copyToClipboardTooltip = 'copiar al portapapeles'; 
     recordedFile = 'archivo grabado';
     transcriptionFileSuffix = 'transcripción';
     downloadSnackBarMessage = 'transcripción descargada a';
+    copySnackBarMessage = 'transcripción copiada al portapapeles'; 
     stopRecordingTooltip = 'detener grabación';
     grantPermissionMessage = 'otorgar acceso al micrófono en el botón de abajo';
     grantPermissionButton = 'otorgar permiso';
@@ -74,6 +80,7 @@ class AppStrings {
     english = 'inglés';
     spanish = 'español';
     cancelTooltip = 'cancelar';
+    reloadTooltip = 'recargar'; 
     transcriptionCanceledMessage = 'transcripción cancelada';
   }
 
@@ -91,9 +98,11 @@ class AppStrings {
     transcribeTooltip = 'record';
     selectFileTooltip = 'select file';
     downloadTooltip = 'download';
+    copyToClipboardTooltip = 'copy to clipboard'; 
     recordedFile = 'recorded file';
     transcriptionFileSuffix = 'transcription';
     downloadSnackBarMessage = 'transcription downloaded to';
+    copySnackBarMessage = 'transcription copied to clipboard'; 
     stopRecordingTooltip = 'stop recording';
     grantPermissionMessage = 'grant microphone access in the button below';
     grantPermissionButton = 'grant permission';
@@ -107,6 +116,7 @@ class AppStrings {
     english = 'english';
     spanish = 'spanish';
     cancelTooltip = 'cancel';
+    reloadTooltip = 'reload'; 
     transcriptionCanceledMessage = 'transcription cancelled';
   }
 }
@@ -120,14 +130,14 @@ void main() async {
 
   switch (selectedLanguage) {
     case 'es':
-    AppStrings.setSpanish();
-    break;
+      AppStrings.setSpanish();
+      break;
     case 'en':
-    AppStrings.setEnglish();
-    break;
+      AppStrings.setEnglish();
+      break;
     default:
-    AppStrings.setEnglish();
-    break;
+      AppStrings.setEnglish();
+      break;
   }
 
   runApp(const WhippxApp());
@@ -170,7 +180,7 @@ class _HomePageState extends State<HomePage> {
   bool _isRecording = false;
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   String? _recordedFilePath;
-  bool _showDownloadButton = false;
+  bool _showingTranscription = false;
   String _selectedLanguage = '';
   SharedPreferences? _prefs;
 
@@ -187,14 +197,14 @@ class _HomePageState extends State<HomePage> {
 
     switch (_selectedLanguage) {
       case 'es':
-      AppStrings.setSpanish();
-      break;
+        AppStrings.setSpanish();
+        break;
       case 'en':
-      AppStrings.setEnglish();
-      break;
+        AppStrings.setEnglish();
+        break;
       default:
-      AppStrings.setEnglish();
-      break;
+        AppStrings.setEnglish();
+        break;
     }
 
     _transcription = AppStrings.initialMessage;
@@ -223,7 +233,7 @@ class _HomePageState extends State<HomePage> {
       _fileName = path.basenameWithoutExtension(audioFile.path);
       _transcription = '${AppStrings.processingMessage} ${path.basename(audioFile.path)}';
       _waitingResponse = true;
-      _showDownloadButton = false;
+      _showingTranscription = false;
     });
 
     final request = http.MultipartRequest('POST', Uri.parse('${dotenv.env['API_URL']}/send-to-transcribe'));
@@ -241,7 +251,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _transcription = AppStrings.internalServerError;
         _waitingResponse = false;
-        _showDownloadButton = false;
+        _showingTranscription = false;
       });
     }
   }
@@ -254,14 +264,14 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _transcription = response.body;
           _waitingResponse = false;
-          _showDownloadButton = true;
+          _showingTranscription = true;
           _prefs?.remove('last_file_id');
         });
       } else if (response.statusCode == 502) {
         setState(() {
           _transcription = AppStrings.serverSleeping;
           _waitingResponse = false;
-          _showDownloadButton = false;
+          _showingTranscription = false;
           _prefs?.remove('last_file_id');
         });
       } else if (response.statusCode == 404) {
@@ -271,21 +281,21 @@ class _HomePageState extends State<HomePage> {
             setState(() {
               _transcription = AppStrings.fileNotFound;
               _waitingResponse = true;
-              _showDownloadButton = false;
+              _showingTranscription = false;
             });
             break;
           case "processing":
             setState(() {
               _transcription = AppStrings.processingMessage;
               _waitingResponse = true;
-              _showDownloadButton = false;
+              _showingTranscription = false;
             });
             break;
           case "unknown error":
             setState(() {
               _transcription = AppStrings.unknownError;
               _waitingResponse = false;
-              _showDownloadButton = false;
+              _showingTranscription = false;
               _prefs?.remove('last_file_id');
             });
             break;
@@ -293,18 +303,17 @@ class _HomePageState extends State<HomePage> {
             setState(() {
               _transcription = AppStrings.unknownResponse;
               _waitingResponse = false;
-              _showDownloadButton = false;
+              _showingTranscription = false;
               _prefs?.remove('last_file_id');
             });
             break;
         }
-        
-      await Future.delayed(const Duration(seconds: 10));
+        await Future.delayed(const Duration(seconds: 10));
       } else {
         setState(() {
           _transcription = AppStrings.internalServerError;
           _waitingResponse = false;
-          _showDownloadButton = false;
+          _showingTranscription = false;
           _prefs?.remove('last_file_id');
         });
       }
@@ -337,6 +346,13 @@ class _HomePageState extends State<HomePage> {
     await file.writeAsString(_transcription);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${AppStrings.downloadSnackBarMessage} $savePath')),
+    );
+  }
+
+  Future<void> _copyTranscriptionToClipboard() async {
+    await Clipboard.setData(ClipboardData(text: _transcription)); 
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppStrings.copySnackBarMessage)),
     );
   }
 
@@ -391,7 +407,7 @@ class _HomePageState extends State<HomePage> {
       _isRecording = true;
       _transcription = AppStrings.recordingMessage;
       _recordedFilePath = filePath;
-      _showDownloadButton = false;
+      _showingTranscription = false;
     });
 
     try {
@@ -403,7 +419,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _isRecording = false;
         _transcription = AppStrings.initialMessage;
-        _showDownloadButton = false;
+        _showingTranscription = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${AppStrings.failedToStartRecorderMessage}: $e')),
@@ -428,7 +444,7 @@ class _HomePageState extends State<HomePage> {
     } else {
       setState(() {
         _transcription = AppStrings.initialMessage;
-        _showDownloadButton = false;
+        _showingTranscription = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.failedToStopRecorderMessage)),
@@ -483,12 +499,19 @@ class _HomePageState extends State<HomePage> {
   void _resetHomePage() {
     setState(() {
       _transcription = AppStrings.initialMessage;
-      _waitingResponse = false;
-      _fileId = '';
-      _fileName = '';
       _isRecording = false;
       _recordedFilePath = null;
-      _showDownloadButton = false;
+      _showingTranscription = false;
+      String? lastFileId = _prefs?.getString('last_file_id');
+      if (lastFileId != null) {
+        _fileId = lastFileId;
+        _waitingResponse = true;
+        _checkTranscriptionStatus();
+      } else {
+        _waitingResponse = false;
+        _fileId = '';
+        _fileName = '';
+      }
     });
   }
 
@@ -499,6 +522,12 @@ class _HomePageState extends State<HomePage> {
       _waitingResponse = false;
       _transcription = AppStrings.transcriptionCanceledMessage;
     });
+  }
+
+  Future<void> _reloadTranscriptionStatus() async {
+    if (_waitingResponse) {
+      _checkTranscriptionStatus();
+    }
   }
 
   @override
@@ -550,14 +579,31 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
-          if (_showDownloadButton)
+          if (_showingTranscription) const SizedBox(width: 16),
+          if (_showingTranscription)
+            FloatingActionButton(
+              onPressed: _copyTranscriptionToClipboard,
+              tooltip: AppStrings.copyToClipboardTooltip,
+              backgroundColor: Theme.of(context).colorScheme.onSecondary,
+              child: Icon(Icons.copy, color: Theme.of(context).colorScheme.secondary),
+            ),
+          if (_showingTranscription) const SizedBox(width: 16),
+          if (_showingTranscription)
             FloatingActionButton(
               onPressed: _downloadTranscription,
               tooltip: AppStrings.downloadTooltip,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: Icon(Icons.download, color: Theme.of(context).colorScheme.onPrimary),
+              backgroundColor: Theme.of(context).colorScheme.onSecondary,
+              child: Icon(Icons.download, color: Theme.of(context).colorScheme.secondary),
             ),
-          const SizedBox(width: 16),
+          if (_waitingResponse) const SizedBox(width: 16),
+          if (_waitingResponse)
+            FloatingActionButton(
+              onPressed: _reloadTranscriptionStatus,
+              tooltip: AppStrings.reloadTooltip,
+              backgroundColor: Theme.of(context).colorScheme.onSecondary,
+              child: Icon(Icons.refresh, color: Theme.of(context).colorScheme.secondary),
+            ),
+          if (_waitingResponse) const SizedBox(width: 16),
           if (_waitingResponse)
             FloatingActionButton(
               onPressed: _cancelTranscription,
@@ -565,19 +611,20 @@ class _HomePageState extends State<HomePage> {
               backgroundColor: Theme.of(context).colorScheme.error,
               child: Icon(Icons.close, color: Theme.of(context).colorScheme.onError),
             ),
-          if (!_waitingResponse)
+          if (!_waitingResponse && !_isRecording) const SizedBox(width: 16),
+          if (!_waitingResponse && !_isRecording)
             FloatingActionButton(
               onPressed: _pickFile,
               tooltip: AppStrings.selectFileTooltip,
               child: const Icon(Icons.folder),
             ),
-          const SizedBox(width: 16),
+          if (!_waitingResponse) const SizedBox(width: 16),
           if (!_waitingResponse)
             FloatingActionButton(
               onPressed: _isRecording ? _stopRecording : _requestPermissionAndStartRecording,
               tooltip: _isRecording ? AppStrings.stopRecordingTooltip : AppStrings.transcribeTooltip,
-              backgroundColor: _isRecording ? null : null,
-              child: Icon(_isRecording ? Icons.stop : Icons.mic, color: _isRecording ? Theme.of(context).colorScheme.error : null),
+              backgroundColor: _isRecording ? Theme.of(context).colorScheme.error : null,
+              child: Icon(_isRecording ? Icons.stop : Icons.mic, color: _isRecording ? Theme.of(context).colorScheme.onError : null),
             ),
         ],
       ),
