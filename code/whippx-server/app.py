@@ -4,6 +4,8 @@ import torch
 import tempfile
 import time
 import threading
+import secrets
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -25,8 +27,10 @@ def send_to_transcribe():
         return jsonify({"error": "no selected file"}), 400
 
     if file:
+        clean_filename = secure_filename(file.filename)
         file_id = str(time.time())
-        transcriptions[file_id] = {"status": "processing"}
+        secret_token = secrets.token_hex(16)
+        transcriptions[file_id] = {"status": "processing", "secret_token": secret_token}
         print(f"Received file for transcription. File ID: {file_id}")
 
         def transcribe_file(file_content, file_id):
@@ -37,28 +41,33 @@ def send_to_transcribe():
             audio = whisperx.load_audio(tmp_path)
             result = model.transcribe(audio, batch_size=16)
             transcription_text = "\n".join([segment['text'] for segment in result["segments"]])
-            transcriptions[file_id] = {"status": "completed", "transcription": transcription_text}
+            transcriptions[file_id] = {"status": "completed", "transcription": transcription_text, "secret_token": secret_token}
             print(f"Transcription completed for File ID: {file_id}. Transcription:\n{transcription_text}")
 
         file_content = file.read()
         threading.Thread(target=transcribe_file, args=(file_content, file_id)).start()
 
-        return jsonify({"file_id": file_id}), 200
+        return jsonify({"file_id": file_id, "secret_token": secret_token}), 200
 
 @app.route('/get-response', methods=['GET'])
 def get_response():
     file_id = request.args.get('file_id')
+    secret_token = request.args.get('secret_token')
+
     if file_id not in transcriptions:
         return jsonify({"error": "file not found"}), 404
+
+    if secret_token != transcriptions[file_id].get('secret_token'):
+        return jsonify({"error": "forbidden"}), 403
 
     if transcriptions[file_id]["status"] == "completed":
         return transcriptions[file_id]["transcription"], 200
 
     if transcriptions[file_id]["status"] == "processing":
-        return jsonify({"status": "processing"}), 404
-    
+        return jsonify({"status": "processing"}), 202
+
     else:
-        return jsonify({"error": "unknown error"}), 404
+        return jsonify({"error": "unknown error"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
