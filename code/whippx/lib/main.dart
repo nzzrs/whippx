@@ -1,9 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; 
-import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -11,6 +9,36 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
+
+// WebSocketChannel wrapper for easy mocking
+abstract class WebSocketChannelWrapper {
+  Stream get stream;
+  void sink(dynamic message);
+  void close(int code);
+}
+
+class IOWebSocketChannelWrapper extends WebSocketChannelWrapper {
+  final IOWebSocketChannel _channel;
+
+  IOWebSocketChannelWrapper(String url)
+      : _channel = IOWebSocketChannel.connect(Uri.parse(url));
+
+  @override
+  Stream get stream => _channel.stream;
+
+  @override
+  void sink(dynamic message) {
+    _channel.sink.add(message);
+  }
+
+  @override
+  void close(int code) {
+    _channel.sink.close(code);
+  }
+}
 
 class AppStrings {
   static const String appTitle = 'whippx';
@@ -19,19 +47,14 @@ class AppStrings {
   static String processingMessage = 'processing';
   static String recordingMessage = 'recording...';
   static String errorTranscribing = 'error transcribing audio';
-  static String serverSleeping = 'shhh, server sleeping...';
-  static String internalServerError = 'internal server error';
-  static String fileNotFound = 'server looking for your file';
-  static String unknownError = 'unknown error';
-  static String unknownResponse = 'what happened??';
   static String transcribeTooltip = 'record';
   static String selectFileTooltip = 'select file';
   static String downloadTooltip = 'download';
-  static String copyToClipboardTooltip = 'copy to clipboard'; 
+  static String copyToClipboardTooltip = 'copy to clipboard';
   static String recordedFile = 'recorded file';
   static String transcriptionFileSuffix = 'transcription';
   static String downloadSnackBarMessage = 'transcription downloaded to';
-  static String copySnackBarMessage = 'transcription copied to clipboard'; 
+  static String copySnackBarMessage = 'transcription copied to clipboard';
   static String stopRecordingTooltip = 'stop recording';
   static String grantPermissionMessage = 'grant microphone access in the button below';
   static String grantPermissionButton = 'grant permission';
@@ -45,8 +68,10 @@ class AppStrings {
   static String english = 'english';
   static String spanish = 'spanish';
   static String cancelTooltip = 'cancel';
-  static String reloadTooltip = 'reload'; 
-  static String transcriptionCanceledMessage = 'transcription cancelled';
+  static String modelSize = 'model size';
+  static String small = 'small';
+  static String medium = 'medium';
+  static String large = 'large';
 
   static void setSpanish() {
     currentLanguage = 'español';
@@ -54,19 +79,14 @@ class AppStrings {
     processingMessage = 'procesando';
     recordingMessage = 'grabando...';
     errorTranscribing = 'error al transcribir el audio';
-    serverSleeping = 'shhh, servidor mimiendo...';
-    internalServerError = 'error interno del servidor';
-    fileNotFound = 'servidor buscando su archivo';
-    unknownError = 'error desconocido';
-    unknownResponse = 'qué pasó ayer?';
     transcribeTooltip = 'grabar';
     selectFileTooltip = 'seleccionar archivo';
     downloadTooltip = 'descargar';
-    copyToClipboardTooltip = 'copiar al portapapeles'; 
+    copyToClipboardTooltip = 'copiar al portapapeles';
     recordedFile = 'archivo grabado';
     transcriptionFileSuffix = 'transcripción';
     downloadSnackBarMessage = 'transcripción descargada a';
-    copySnackBarMessage = 'transcripción copiada al portapapeles'; 
+    copySnackBarMessage = 'transcripción copiada al portapapeles';
     stopRecordingTooltip = 'detener grabación';
     grantPermissionMessage = 'otorgar acceso al micrófono en el botón de abajo';
     grantPermissionButton = 'otorgar permiso';
@@ -80,8 +100,10 @@ class AppStrings {
     english = 'inglés';
     spanish = 'español';
     cancelTooltip = 'cancelar';
-    reloadTooltip = 'recargar'; 
-    transcriptionCanceledMessage = 'transcripción cancelada';
+    modelSize = 'tamaño del modelo';
+    small = 'pequeño';
+    medium = 'mediano';
+    large = 'grande';
   }
 
   static void setEnglish() {
@@ -90,19 +112,14 @@ class AppStrings {
     processingMessage = 'processing';
     recordingMessage = 'recording...';
     errorTranscribing = 'error transcribing audio';
-    serverSleeping = 'shhh, server sleeping...';
-    internalServerError = 'internal server error';
-    fileNotFound = 'server looking for your file';
-    unknownError = 'unknown error';
-    unknownResponse = 'what happened??';
     transcribeTooltip = 'record';
     selectFileTooltip = 'select file';
     downloadTooltip = 'download';
-    copyToClipboardTooltip = 'copy to clipboard'; 
+    copyToClipboardTooltip = 'copy to clipboard';
     recordedFile = 'recorded file';
     transcriptionFileSuffix = 'transcription';
     downloadSnackBarMessage = 'transcription downloaded to';
-    copySnackBarMessage = 'transcription copied to clipboard'; 
+    copySnackBarMessage = 'transcription copied to clipboard';
     stopRecordingTooltip = 'stop recording';
     grantPermissionMessage = 'grant microphone access in the button below';
     grantPermissionButton = 'grant permission';
@@ -116,8 +133,10 @@ class AppStrings {
     english = 'english';
     spanish = 'spanish';
     cancelTooltip = 'cancel';
-    reloadTooltip = 'reload'; 
-    transcriptionCanceledMessage = 'transcription cancelled';
+    modelSize = 'model size';
+    small = 'small';
+    medium = 'medium';
+    large = 'large';
   }
 }
 
@@ -164,7 +183,8 @@ class WhippxApp extends StatelessWidget {
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.title});
+  final WebSocketChannelWrapper? channel;
+  const HomePage({super.key, required this.title, this.channel});
 
   final String title;
 
@@ -175,7 +195,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String _transcription = '';
   bool _waitingResponse = false;
-  String _fileId = '';
   String _fileName = '';
   bool _isRecording = false;
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
@@ -183,12 +202,15 @@ class _HomePageState extends State<HomePage> {
   bool _showingTranscription = false;
   String _selectedLanguage = '';
   SharedPreferences? _prefs;
+  WebSocketChannelWrapper? _channel;
+  String _modelSize = 'large-v2';
 
   @override
   void initState() {
     super.initState();
     _initializePreferences();
     _initializeRecorder();
+    _connectToWebSocket();
   }
 
   Future<void> _initializePreferences() async {
@@ -208,13 +230,6 @@ class _HomePageState extends State<HomePage> {
     }
 
     _transcription = AppStrings.initialMessage;
-
-    String? lastFileId = _prefs?.getString('last_file_id');
-    if (lastFileId != null) {
-      _fileId = lastFileId;
-      _waitingResponse = true;
-      _checkTranscriptionStatus();
-    }
   }
 
   Future<void> _initializeRecorder() async {
@@ -222,9 +237,30 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
+  void _connectToWebSocket() {
+    _channel = widget.channel ?? IOWebSocketChannelWrapper('${dotenv.env['API_URL_WS']}');
+    _channel?.stream.listen((message) {
+      final decodedMessage = jsonDecode(message);
+      if (decodedMessage.containsKey('transcription')) {
+        setState(() {
+          _transcription = decodedMessage['transcription'];
+          _waitingResponse = false;
+          _showingTranscription = true;
+        });
+      } else if (decodedMessage.containsKey('error')) {
+        setState(() {
+          _transcription = decodedMessage['error'];
+          _waitingResponse = false;
+          _showingTranscription = false;
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
     _recorder.closeRecorder();
+    _channel?.close(status.goingAway);
     super.dispose();
   }
 
@@ -236,88 +272,11 @@ class _HomePageState extends State<HomePage> {
       _showingTranscription = false;
     });
 
-    final request = http.MultipartRequest('POST', Uri.parse('${dotenv.env['API_URL']}/send-to-transcribe'));
-    request.files.add(await http.MultipartFile.fromPath('file', audioFile.path));
-
-    final response = await request.send();
-
-    if (response.statusCode == 200) {
-      final responseBody = await response.stream.bytesToString();
-      final jsonResponse = json.decode(responseBody);
-      _fileId = jsonResponse['file_id'];
-      await _prefs?.setString('last_file_id', _fileId);
-      _checkTranscriptionStatus();
-    } else {
-      setState(() {
-        _transcription = AppStrings.internalServerError;
-        _waitingResponse = false;
-        _showingTranscription = false;
-      });
-    }
-  }
-
-  Future<void> _checkTranscriptionStatus() async {
-    while (_waitingResponse && _prefs?.getString('last_file_id') != null) {
-      final response = await http.get(Uri.parse('${dotenv.env['API_URL']}/get-response?file_id=$_fileId'));
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _transcription = response.body;
-          _waitingResponse = false;
-          _showingTranscription = true;
-          _prefs?.remove('last_file_id');
-        });
-      } else if (response.statusCode == 502) {
-        setState(() {
-          _transcription = AppStrings.serverSleeping;
-          _waitingResponse = false;
-          _showingTranscription = false;
-          _prefs?.remove('last_file_id');
-        });
-      } else if (response.statusCode == 404) {
-        final responseBody = json.decode(response.body);
-        switch (responseBody['error'] ?? responseBody['status']) {
-          case "file not found":
-            setState(() {
-              _transcription = AppStrings.fileNotFound;
-              _waitingResponse = true;
-              _showingTranscription = false;
-            });
-            break;
-          case "processing":
-            setState(() {
-              _transcription = AppStrings.processingMessage;
-              _waitingResponse = true;
-              _showingTranscription = false;
-            });
-            break;
-          case "unknown error":
-            setState(() {
-              _transcription = AppStrings.unknownError;
-              _waitingResponse = false;
-              _showingTranscription = false;
-              _prefs?.remove('last_file_id');
-            });
-            break;
-          default:
-            setState(() {
-              _transcription = AppStrings.unknownResponse;
-              _waitingResponse = false;
-              _showingTranscription = false;
-              _prefs?.remove('last_file_id');
-            });
-            break;
-        }
-        await Future.delayed(const Duration(seconds: 10));
-      } else {
-        setState(() {
-          _transcription = AppStrings.internalServerError;
-          _waitingResponse = false;
-          _showingTranscription = false;
-          _prefs?.remove('last_file_id');
-        });
-      }
-    }
+    final audioBytes = await audioFile.readAsBytes();
+    _channel?.sink(jsonEncode({
+      'audio': base64Encode(audioBytes),
+      'model_size': _modelSize,
+    }));
   }
 
   Future<void> _pickFile() async {
@@ -350,7 +309,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _copyTranscriptionToClipboard() async {
-    await Clipboard.setData(ClipboardData(text: _transcription)); 
+    await Clipboard.setData(ClipboardData(text: _transcription));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppStrings.copySnackBarMessage)),
     );
@@ -502,32 +461,17 @@ class _HomePageState extends State<HomePage> {
       _isRecording = false;
       _recordedFilePath = null;
       _showingTranscription = false;
-      String? lastFileId = _prefs?.getString('last_file_id');
-      if (lastFileId != null) {
-        _fileId = lastFileId;
-        _waitingResponse = true;
-        _checkTranscriptionStatus();
-      } else {
-        _waitingResponse = false;
-        _fileId = '';
-        _fileName = '';
-      }
+      _waitingResponse = false;
+      _fileName = '';
     });
   }
 
   void _cancelTranscription() {
     setState(() {
-      _fileId = '';
-      _prefs?.remove('last_file_id');
       _waitingResponse = false;
-      _transcription = AppStrings.transcriptionCanceledMessage;
+      _transcription = AppStrings.initialMessage;
+      _connectToWebSocket();
     });
-  }
-
-  Future<void> _reloadTranscriptionStatus() async {
-    if (_waitingResponse) {
-      _checkTranscriptionStatus();
-    }
   }
 
   @override
@@ -540,16 +484,33 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: <Widget>[
           PopupMenuButton<String>(
-            icon: const Icon(Icons.menu),
+            icon: const Icon(Icons.settings),
             onSelected: (String result) {
               if (result == 'language') {
                 _showLanguageDialog();
+              } else if (result.startsWith('model_')) {
+                setState(() {
+                  _modelSize = result.substring('model_'.length);
+                });
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               PopupMenuItem<String>(
                 value: 'language',
                 child: Text('${AppStrings.language}: ${AppStrings.currentLanguage}'),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                value: 'model_small',
+                child: Text('${AppStrings.modelSize}: ${AppStrings.small}'),
+              ),
+              PopupMenuItem<String>(
+                value: 'model_medium',
+                child: Text('${AppStrings.modelSize}: ${AppStrings.medium}'),
+              ),
+              PopupMenuItem<String>(
+                value: 'model_large-v2',
+                child: Text('${AppStrings.modelSize}: ${AppStrings.large}'),
               ),
             ],
           ),
@@ -594,14 +555,6 @@ class _HomePageState extends State<HomePage> {
               tooltip: AppStrings.downloadTooltip,
               backgroundColor: Theme.of(context).colorScheme.onSecondary,
               child: Icon(Icons.download, color: Theme.of(context).colorScheme.secondary),
-            ),
-          if (_waitingResponse) const SizedBox(width: 16),
-          if (_waitingResponse)
-            FloatingActionButton(
-              onPressed: _reloadTranscriptionStatus,
-              tooltip: AppStrings.reloadTooltip,
-              backgroundColor: Theme.of(context).colorScheme.onSecondary,
-              child: Icon(Icons.refresh, color: Theme.of(context).colorScheme.secondary),
             ),
           if (_waitingResponse) const SizedBox(width: 16),
           if (_waitingResponse)

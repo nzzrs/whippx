@@ -1,73 +1,64 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
+from flask_socketio import SocketIO, emit
 import whisperx
 import torch
 import tempfile
-import time
-import threading
-import secrets
-from werkzeug.utils import secure_filename
+import os
+import base64
 
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model = whisperx.load_model("large-v2", device, compute_type="float32")
-transcriptions = {}
+_models = {}
+
+def get_model(size):
+    if size not in _models:
+        print(f"Loading model: {size}")
+        _models[size] = whisperx.load_model(size, device, compute_type="float32")
+    return _models[size]
 
 @app.route('/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "ok"}), 200
 
-@app.route('/send-to-transcribe', methods=['POST'])
-def send_to_transcribe():
-    if 'file' not in request.files:
-        return jsonify({"error": "no file part"}), 400
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
 
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "no selected file"}), 400
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected')
 
-    if file:
-        clean_filename = secure_filename(file.filename)
-        file_id = str(time.time())
-        secret_token = secrets.token_hex(16)
-        transcriptions[file_id] = {"status": "processing", "secret_token": secret_token}
-        print(f"Received file for transcription. File ID: {file_id}")
+@socketio.on('transcribe')
+def handle_transcribe(data):
+    audio_data = data['audio']
+    model_size = data.get('model_size', 'large-v2')
+    tmp_path = None
 
-        def transcribe_file(file_content, file_id):
-            with tempfile.NamedTemporaryFile(delete=False) as tmp:
-                tmp.write(file_content)
-                tmp_path = tmp.name
+    valid_models = ["small", "medium", "large-v2"]
+    if model_size not in valid_models:
+        emit('error', {'error': 'Invalid model size'})
+        return
 
-            audio = whisperx.load_audio(tmp_path)
-            result = model.transcribe(audio, batch_size=16)
-            transcription_text = "\n".join([segment['text'] for segment in result["segments"]])
-            transcriptions[file_id] = {"status": "completed", "transcription": transcription_text, "secret_token": secret_token}
-            print(f"Transcription completed for File ID: {file_id}. Transcription:\n{transcription_text}")
+    try:
+        model = get_model(model_size)
 
-        file_content = file.read()
-        threading.Thread(target=transcribe_file, args=(file_content, file_id)).start()
+        decoded_audio_data = base64.b64decode(audio_data)
 
-        return jsonify({"file_id": file_id, "secret_token": secret_token}), 200
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(decoded_audio_data)
+            tmp_path = tmp.name
 
-@app.route('/get-response', methods=['GET'])
-def get_response():
-    file_id = request.args.get('file_id')
-    secret_token = request.args.get('secret_token')
-
-    if file_id not in transcriptions:
-        return jsonify({"error": "file not found"}), 404
-
-    if secret_token != transcriptions[file_id].get('secret_token'):
-        return jsonify({"error": "forbidden"}), 403
-
-    if transcriptions[file_id]["status"] == "completed":
-        return transcriptions[file_id]["transcription"], 200
-
-    if transcriptions[file_id]["status"] == "processing":
-        return jsonify({"status": "processing"}), 202
-
-    else:
-        return jsonify({"error": "unknown error"}), 500
+        audio = whisperx.load_audio(tmp_path)
+        result = model.transcribe(audio, batch_size=16)
+        transcription_text = "\n".join([segment['text'] for segment in result["segments"]])
+        emit('transcription_result', {'transcription': transcription_text})
+    except Exception as e:
+        emit('error', {'error': str(e)})
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    socketio.run(app, debug=True, host='0.0.0.0')

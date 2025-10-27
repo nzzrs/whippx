@@ -1,5 +1,7 @@
 flask
+Flask-SocketIO
+python-socketio
 torch
 torchaudio
-pyannote.audio
 gunicorn
+whisperx
